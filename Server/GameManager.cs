@@ -32,7 +32,6 @@ namespace SignalRServer
             {
                 roomIds.Add($"{room.Key}: {room.Value.allPlayers.Count} Players");
             }
-
             string payload = JsonConvert.SerializeObject(roomIds);
             hub.Clients.Client(connectionID).SendAsync("Rooms", payload);
         }
@@ -41,7 +40,7 @@ namespace SignalRServer
         {
             if(!rooms.ContainsKey(request.roomID))
             {
-                rooms.Add(request.roomID, new Room(hub, this));
+                rooms.Add(request.roomID, new Room(hub, this, request.roomID));
             }
 
             playerRooms.Add(request.connectionID, request.roomID);
@@ -107,6 +106,38 @@ namespace SignalRServer
             if (playerRooms.ContainsKey(connectionId))
             {
                 await rooms[playerRooms[connectionId]].ChangeState(state);
+            }
+        }
+
+        public async void EndGame(string room)
+        {
+            if(rooms.ContainsKey(room))
+            {
+                rooms[room].End();
+            }
+        }
+
+        public async void CloseRoom(string roomId)
+        {
+            if (rooms.ContainsKey(roomId))
+            {
+                var players = rooms[roomId].allPlayers;
+
+                foreach (var player in players)
+                {
+                    playerRooms.Remove(player);
+                }
+                await hub.Clients.Clients(players).SendAsync("Close", "");
+
+                rooms.Remove(roomId);
+
+                List<string> roomIds = new List<string>();
+                foreach (var room in rooms)
+                {
+                    roomIds.Add($"{room.Key}: {room.Value.allPlayers.Count} Players");
+                }
+                string payload = JsonConvert.SerializeObject(roomIds);
+                await hub.Clients.Clients(players).SendAsync("Rooms", payload);
             }
         }
     }

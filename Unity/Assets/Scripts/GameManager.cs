@@ -65,6 +65,12 @@ public class GameManager : MonoBehaviour
 
     private TeamStatus teamStat;
 
+    public GameObject winPanel;
+    public Text winLabel;
+
+    public GameObject endPanel;
+    public Text endScoreLabel;
+
     public void RefreshStat(GameStat gstat)
     {
         stat = gstat;
@@ -129,6 +135,7 @@ public class GameManager : MonoBehaviour
             Debug.Log($"Connected: {e.ConnectionId}");
             isConnected = true;
             loadingPanel.SetActive(false);
+            joinRoomPage.SetActive(true);
             //Join();
         };
 
@@ -210,6 +217,40 @@ public class GameManager : MonoBehaviour
         {
             var index = int.Parse(payload);
             StartCoroutine(EnemyTurn(index));
+        });
+        
+        signalR.On("Win", (string payload) =>
+        {
+            winLabel.text = payload + " Party Won";
+            winPanel.SetActive(true);
+        });
+        
+        signalR.On("Reset", (string payload) =>
+        {
+            winPanel.SetActive(false);
+            slot.Clear();
+        });
+        
+        signalR.On("End", (string payload) =>
+        {
+            endPanel.SetActive(true);
+            float score = 0;
+            if (turn == Turn.Cancer)
+            {
+                score = (10 - stat.health) + stat.cancer + (10 - stat.emotion);
+            }
+            else
+            {
+                score = stat.health - stat.cancer + stat.emotion;
+            }
+            endScoreLabel.text = $"Total Score:\n{score}";
+        });
+        
+        signalR.On("Close", (string payload) =>
+        {
+            endPanel.SetActive(false);
+            joinRoomPage.SetActive(true);
+            slot.Clear();
         });
 
         signalR.Connect();
@@ -361,5 +402,10 @@ public class GameManager : MonoBehaviour
     {
         changeStatePanel.SetActive(false);
         signalR.Invoke("SetState", stateSelector.value.ToString());
+    }
+
+    public void End()
+    {
+        signalR.Invoke("EndGame", roomID);
     }
 }

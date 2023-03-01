@@ -60,6 +60,11 @@ namespace SignalRServer.Hubs
             manager.ChangeState(Context.ConnectionId, state);
         }
 
+        public async Task EndGame(string room)
+        {
+            manager.EndGame(room);
+        }
+
         public override Task OnDisconnectedAsync(Exception exception)
         {
             Console.WriteLine($"Disconnected: {Context.ConnectionId}");

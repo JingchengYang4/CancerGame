@@ -27,4 +27,13 @@ public class CardSlot : MonoBehaviour
             cards[i].index = i;
         }
     }
+
+    public void Clear()
+    {
+        foreach (var card in cards)
+        {
+            Destroy(card.gameObject);
+        }
+        cards.Clear();
+    }
 }

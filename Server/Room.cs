@@ -15,7 +15,9 @@ namespace SignalRServer
 
         public GameManager manager;
 
-        public Room(IHubContext<MainHub> _hub, GameManager _manager)
+        public string id;
+
+        public Room(IHubContext<MainHub> _hub, GameManager _manager, string _id)
         {
             stat = new GameStat()
             {
@@ -27,6 +29,7 @@ namespace SignalRServer
 
             hub = _hub;
             manager = _manager;
+            id = _id;
         }
 
         public GameStat stat;
@@ -181,14 +184,14 @@ namespace SignalRServer
             {
                 //cancerWin
                 await hub.Clients.Clients(allPlayers).SendAsync("Win", "Cancer");
-                Reset();
+                manager.CloseRoom(id);
                 return true;
             }
             else if (stat.health >= 10 && stat.emotion >= 5 || stat.health >= 10 && stat.economy > 5)
             {
                 //patientWin
                 await hub.Clients.Clients(allPlayers).SendAsync("Win", "Patient");
-                Reset();
+                manager.CloseRoom(id);
                 return true;
             }
             return false;
@@ -253,6 +256,13 @@ namespace SignalRServer
             allPlayers.Remove(connectionID);
 
             await UpdateTeamStat();
+        }
+
+        public async void End()
+        {
+            await hub.Clients.Clients(allPlayers).SendAsync("End", "");
+            await Task.Delay(5000);
+            manager.CloseRoom(id);
         }
     }
 }
