@@ -13,6 +13,7 @@ public class GameManager : MonoBehaviour
     public GameObject cardObj;
     public CardSlot slot;
     public Transform enemySlot;
+    public Transform enemyStack;
 
     public GameStat stat;
 
@@ -58,6 +59,7 @@ public class GameManager : MonoBehaviour
     public TurnPayload turnPayload;
 
     public GameObject cancerProgressPanel;
+    public bool hasExamination = false;
 
     private string roomID;
 
@@ -70,6 +72,8 @@ public class GameManager : MonoBehaviour
 
     public GameObject endPanel;
     public Text endScoreLabel;
+
+    public Card enemyCardUsed;
 
     public void RefreshStat(GameStat gstat)
     {
@@ -152,7 +156,7 @@ public class GameManager : MonoBehaviour
             if (turn == Turn.Patient)
             {
                 partyLabel.text = "Patient Party";
-                cancerProgressPanel.SetActive(false);
+                cancerProgressPanel.SetActive(false || hasExamination);
             }
             else
             {
@@ -228,7 +232,7 @@ public class GameManager : MonoBehaviour
         signalR.On("Reset", (string payload) =>
         {
             winPanel.SetActive(false);
-            slot.Clear();
+            Reset();
         });
         
         signalR.On("End", (string payload) =>
@@ -250,10 +254,16 @@ public class GameManager : MonoBehaviour
         {
             endPanel.SetActive(false);
             joinRoomPage.SetActive(true);
-            slot.Clear();
+            Reset();
         });
 
         signalR.Connect();
+    }
+
+    public void Reset()
+    {
+        hasExamination = false;
+        slot.Clear();
     }
 
     public void UpdateTurnLabel()
@@ -351,6 +361,19 @@ public class GameManager : MonoBehaviour
         }
         InProgress();
         Debug.Log(JsonConvert.SerializeObject(card.meta));
+
+        var tags = card.meta.tags.Split('#');
+        foreach (var tag in tags)
+        {
+            switch (tag)
+            {
+                case "SHOW_CANCER":
+                    cancerProgressPanel.SetActive(true);
+                    hasExamination = true;
+                    break;
+            }
+        }
+        
         signalR.Invoke("Card", JsonConvert.SerializeObject(card.meta));
         //StartCoroutine(UseCardCor(card));
     }
@@ -360,9 +383,16 @@ public class GameManager : MonoBehaviour
         var c = newCard(index);
         c.transform.position = enemySlot.position;
         c.slotPos = Vector3.zero;
-        yield return new WaitForSeconds(2);
+        yield return new WaitForSeconds(1.5f);
+        c.slotPos = enemyStack.position;
+        yield return new WaitForSeconds(5);
         //ProcessCard(c);
-        c.state = CardState.Decay;
+        if(enemyCardUsed is not null)
+        {
+            enemyCardUsed.state = CardState.Decay;
+        }
+
+        enemyCardUsed = c;
         //StartCoroutine(PlayerTurn());
     }
 

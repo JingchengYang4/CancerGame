@@ -24,5 +24,8 @@ public class CardMeta : ScriptableObject
     public float cancer { get; set; } = 0;
     
     public int index { get; set; }
+    
+    [field: SerializeField]
+    public string tags { get; set; }
 }
 
