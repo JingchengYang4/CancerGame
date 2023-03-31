@@ -9,19 +9,14 @@ namespace SignalRServer
 {
     public class Startup
     {
-        bool isServer = false;
-
         public void ConfigureServices(IServiceCollection services)
         {
 
-            if(isServer)
-            {
-                services.AddSignalR();
+            services.AddSignalR();
 
-                services.AddSingleton<GameManager>();
+            services.AddSingleton<GameManager>();
 
-                services.AddCors();
-            }
+            services.AddCors();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -41,7 +36,11 @@ namespace SignalRServer
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials();
-        });
+                builder.WithOrigins("https://cancercn.scie.dev")
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            });
 
             // Provider mappings needed for Brotli compression format from Unity publishing settings
             var provider = new FileExtensionContentTypeProvider();
@@ -57,13 +56,10 @@ namespace SignalRServer
             app.UseRouting();
 
 
-            if (isServer)
+            app.UseEndpoints(endpoints =>
             {
-                app.UseEndpoints(endpoints =>
-                {
-                    endpoints.MapHub<MainHub>("/MainHub");
-                });
-            }
+                endpoints.MapHub<MainHub>("/MainHub");
+            });
         }
     }
 }

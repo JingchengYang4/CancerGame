@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
+using TMPro;
 using Random = UnityEngine.Random;
 
 public class GameManager : MonoBehaviour
@@ -48,14 +49,14 @@ public class GameManager : MonoBehaviour
     private SignalR signalR;
 
     public Text roomsStat;
-    public InputField roomInput;
+    public TMP_InputField roomInput;
     public GameObject joinRoomPage;
     public bool isConnected = false;
 
-    public InputField playerNameInput;
+    public TMP_InputField playerNameInput;
 
     public GameObject changeStatePanel;
-    public Dropdown stateSelector;
+    public TMP_Dropdown stateSelector;
 
     public TurnPayload turnPayload;
 
@@ -128,15 +129,13 @@ public class GameManager : MonoBehaviour
 
     public bool debugWeb = false;
 
-    public bool cnVersion = false;
-
     public void ConfigureSignalR()
     {
         if (Application.isEditor && !debugWeb)
         {
             signalRHubURL = "http://localhost:5544/MainHub";
         }
-        else if (cnVersion)
+        else
         {
             signalRHubURL = "https://cancer.scie.dev/MainHub";
         }
@@ -453,11 +452,11 @@ public class GameManager : MonoBehaviour
     public void OpenChangeState()
     {
         changeStatePanel.SetActive(true);
-        stateSelector.options = new List<Dropdown.OptionData>()
+        stateSelector.options = new List<TMP_Dropdown.OptionData>()
         {
-            new Dropdown.OptionData(localization["Diagnosis"]),
-            new Dropdown.OptionData(localization["Treatment"]),
-            new Dropdown.OptionData(localization["Post-treatment"]) 
+            new TMP_Dropdown.OptionData(localization["Diagnosis"]),
+            new TMP_Dropdown.OptionData(localization["Treatment"]),
+            new TMP_Dropdown.OptionData(localization["Post-treatment"]) 
         };
         stateSelector.value = (int) turn;
     }
