@@ -35,7 +35,11 @@ namespace SignalRServer
                     .AllowAnyMethod()
                     .AllowAnyHeader()
                     .AllowCredentials();
-        });
+                builder.WithOrigins("https://cancercn.scie.dev")
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            });
 
             // Provider mappings needed for Brotli compression format from Unity publishing settings
             var provider = new FileExtensionContentTypeProvider();
