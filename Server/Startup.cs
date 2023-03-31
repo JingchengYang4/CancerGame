@@ -9,13 +9,19 @@ namespace SignalRServer
 {
     public class Startup
     {
+        bool isServer = false;
+
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddCors();
 
-            services.AddSignalR();
+            if(isServer)
+            {
+                services.AddSignalR();
 
-            services.AddSingleton<GameManager>();
+                services.AddSingleton<GameManager>();
+
+                services.AddCors();
+            }
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -50,10 +56,14 @@ namespace SignalRServer
 
             app.UseRouting();
 
-            app.UseEndpoints(endpoints =>
+
+            if (isServer)
             {
-                endpoints.MapHub<MainHub>("/MainHub");
-            });
+                app.UseEndpoints(endpoints =>
+                {
+                    endpoints.MapHub<MainHub>("/MainHub");
+                });
+            }
         }
     }
 }

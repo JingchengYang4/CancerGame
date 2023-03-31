@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 using Newtonsoft.Json;
@@ -127,16 +128,19 @@ public class GameManager : MonoBehaviour
 
     public bool debugWeb = false;
 
+    public bool cnVersion = false;
+
     public void ConfigureSignalR()
     {
         if (Application.isEditor && !debugWeb)
         {
             signalRHubURL = "http://localhost:5544/MainHub";
         }
-        else
+        else if (cnVersion)
         {
             signalRHubURL = "https://cancer.scie.dev/MainHub";
         }
+
         signalR = new SignalR();
         signalR.Init(signalRHubURL);
 
@@ -162,12 +166,12 @@ public class GameManager : MonoBehaviour
             turn = (Turn) side;
             if (turn == Turn.Patient)
             {
-                partyLabel.text = "Patient Party";
+                partyLabel.text = "患者阵营";
                 cancerProgressPanel.SetActive(false || hasExamination);
             }
             else
             {
-                partyLabel.text = "Cancer Party";
+                partyLabel.text = "癌症阵营";
                 cancerProgressPanel.SetActive(true);
             }
         });
@@ -175,7 +179,7 @@ public class GameManager : MonoBehaviour
         signalR.On("Rooms", (string payload) =>
         {
             var rooms = JsonConvert.DeserializeObject<List<string>>(payload);
-            roomsStat.text = "Rooms:\n" + string.Join('\n', rooms);
+            roomsStat.text = translateDefault("房间:\n" + string.Join('\n', rooms));
         });
         
         signalR.On("Stage", (string payload) =>
@@ -185,13 +189,13 @@ public class GameManager : MonoBehaviour
             switch (stage)
             {
                 case TreatmentStage.Dia:
-                    stageLabel.text = "Diagnosis";
+                    stageLabel.text = "诊断阶段";
                     break;
                 case TreatmentStage.Treatment:
-                    stageLabel.text = "Treatment";
+                    stageLabel.text = "治疗阶段";
                     break;
                 case TreatmentStage.PostTreatment:
-                    stageLabel.text = "Post-treatment";
+                    stageLabel.text = "后续治疗阶段";
                     break;
             }
         });
@@ -220,7 +224,8 @@ public class GameManager : MonoBehaviour
         signalR.On("Team", (string payload) =>
         {
             teamStat = JsonConvert.DeserializeObject<TeamStatus>(payload);
-            teamStatLabel.text = $"Room: {roomID}\nPatient Party:\n{string.Join('\n', teamStat.patientPlayers)}\n\nCancer Party:\n{string.Join('\n', teamStat.cancerPlayers)}";
+            teamStatLabel.text = $"房间: {roomID}\n患者阵营:\n{string.Join('\n', teamStat.patientPlayers)}\n\n癌症阵营:\n{string.Join('\n', teamStat.cancerPlayers)}";
+            teamStatLabel.text = translateDefault(teamStatLabel.text);
             UpdateTurnLabel();
         });
         
@@ -232,7 +237,7 @@ public class GameManager : MonoBehaviour
         
         signalR.On("Win", (string payload) =>
         {
-            winLabel.text = payload + " Party Won";
+            winLabel.text = payload + "获胜";
             winPanel.SetActive(true);
         });
         
@@ -254,7 +259,7 @@ public class GameManager : MonoBehaviour
             {
                 score = stat.health - stat.cancer + stat.emotion;
             }
-            endScoreLabel.text = $"Total Score:\n{score}";
+            endScoreLabel.text = $"总分:\n{score}";
         });
         
         signalR.On("Close", (string payload) =>
@@ -295,11 +300,11 @@ public class GameManager : MonoBehaviour
     {
         if (turnPayload.side == 0)
         {
-            turnLabel.text = $"{teamStat.patientPlayers[turnPayload.counter]}'sTurn";
+            turnLabel.text = $"轮到{translateDefault(teamStat.patientPlayers[turnPayload.counter])}";
         }
         else
         {
-            turnLabel.text = $"{teamStat.cancerPlayers[turnPayload.counter]}'s Turn";
+            turnLabel.text = $"轮到{translateDefault(teamStat.cancerPlayers[turnPayload.counter])}";
         }
     }
 
@@ -358,7 +363,7 @@ public class GameManager : MonoBehaviour
 
     public IEnumerator PlayerTurn()
     {
-        turnLabel.text = "Your Turn";
+        turnLabel.text = "轮到你了";
         yield return new WaitForSeconds(1);
         var c = newCard();
         c.transform.position = enemySlot.position;
@@ -450,17 +455,24 @@ public class GameManager : MonoBehaviour
         changeStatePanel.SetActive(true);
         stateSelector.options = new List<Dropdown.OptionData>()
         {
-            new Dropdown.OptionData("Diagnosis"),
-            new Dropdown.OptionData("Treatment"),
-            new Dropdown.OptionData("Post-treatment") 
+            new Dropdown.OptionData(localization["Diagnosis"]),
+            new Dropdown.OptionData(localization["Treatment"]),
+            new Dropdown.OptionData(localization["Post-treatment"]) 
         };
         stateSelector.value = (int) turn;
     }
 
+    private Dictionary<string, string> localization = new Dictionary<string, string>()
+    {
+        {"Diagnosis", "诊断"},
+        {"Treatment", "治疗"},
+        {"Post-treatment", "后续治疗"},
+    };
+
     public void ConfirmChangeState()
     {
         changeStatePanel.SetActive(false);
-        signalR.Invoke("SetState", stateSelector.value.ToString());
+        signalR.Invoke("SetState",  stateSelector.value.ToString());
     }
 
     public void End()
@@ -479,5 +491,10 @@ public class GameManager : MonoBehaviour
     {
         isViewingCard = false;
         viewCardPanel.SetActive(false);
+    }
+
+    public string translateDefault(string text)
+    {
+        return text.Replace("Cancer", "癌症阵营").Replace("Patient", "患者阵营").Replace("Players", "玩家").Replace("Player", "玩家");
     }
 }

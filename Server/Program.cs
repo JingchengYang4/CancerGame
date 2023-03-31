@@ -11,6 +11,8 @@ namespace SignalRServer
             CreateHostBuilder(args).Build().Run();
         }
 
+        bool isCn;
+
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
@@ -18,7 +20,7 @@ namespace SignalRServer
                     webBuilder.UseStartup<Startup>();
                     webBuilder.UseKestrel(options =>
                     {
-                        options.Listen(IPAddress.Any, 5544);
+                        options.Listen(IPAddress.Any, 5545);
                     });
                 });
     }
