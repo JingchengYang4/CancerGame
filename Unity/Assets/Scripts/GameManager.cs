@@ -75,6 +75,13 @@ public class GameManager : MonoBehaviour
 
     public Card enemyCardUsed;
 
+    public RectTransform tooltip;
+    public int tooltipCounter = 0;
+
+    public bool isViewingCard;
+    public GameObject viewCardPanel;
+    public Image cardImage;
+
     public void RefreshStat(GameStat gstat)
     {
         stat = gstat;
@@ -260,10 +267,28 @@ public class GameManager : MonoBehaviour
         signalR.Connect();
     }
 
+    private void LateUpdate()
+    {
+        if (tooltipCounter <= 0)
+        {
+            tooltip.gameObject.SetActive(false);
+        }
+        else
+        {
+            tooltip.gameObject.SetActive(true);
+        }
+        
+        var mosPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        mosPos.z = -5;
+        tooltip.localPosition = mosPos;
+        tooltipCounter = 0;
+    }
+
     public void Reset()
     {
         hasExamination = false;
         slot.Clear();
+        viewCardPanel.SetActive(false);
     }
 
     public void UpdateTurnLabel()
@@ -380,12 +405,16 @@ public class GameManager : MonoBehaviour
 
     public IEnumerator EnemyTurn(int index)
     {
+        viewCardPanel.SetActive(false);
+        if(enemyCardUsed is not null)
+        {
+            enemyCardUsed.transform.position -= Vector3.forward;
+        }
         var c = newCard(index);
         c.transform.position = enemySlot.position;
         c.slotPos = Vector3.zero;
         yield return new WaitForSeconds(1.5f);
         c.slotPos = enemyStack.position;
-        yield return new WaitForSeconds(5);
         //ProcessCard(c);
         if(enemyCardUsed is not null)
         {
@@ -437,5 +466,18 @@ public class GameManager : MonoBehaviour
     public void End()
     {
         signalR.Invoke("EndGame", roomID);
+    }
+
+    public void ViewCard(Sprite sprite)
+    {
+        cardImage.sprite = sprite;
+        viewCardPanel.SetActive(true);
+        isViewingCard = true;
+    }
+
+    public void CloseViewCard()
+    {
+        isViewingCard = false;
+        viewCardPanel.SetActive(false);
     }
 }

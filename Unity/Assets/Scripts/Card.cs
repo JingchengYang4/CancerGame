@@ -16,17 +16,19 @@ public class Card : MonoBehaviour
     public SpriteRenderer renderer;
     public CardSlot slot;
 
+    private GameManager manager;
+
     public int index = 0;
 
     private void Start()
     {
         slot = FindObjectOfType<CardSlot>();
         targetPos = transform.position;
+        manager = FindObjectOfType<GameManager>();
     }
 
     private void Update()
     {
-
         targetPos = slotPos;
         var scale = Vector3.one * 0.1f;
 
@@ -45,6 +47,8 @@ public class Card : MonoBehaviour
                 target = new Color(1, 1, 1, 0.2f);
             }
         }
+        
+        if (manager.isViewingCard) target = Color.clear;
 
         if(state != CardState.Decay)
         {
@@ -69,6 +73,16 @@ public class Card : MonoBehaviour
     private void OnMouseOver()
     {
         onMouseOver = true;
+        
+        if (Vector3.Distance(transform.position, targetPos) <= 0.1f && !manager.isViewingCard)
+        {
+            manager.tooltipCounter++;
+            if (Input.GetMouseButtonDown(1))
+            {
+                Debug.Log("Inspect");
+                manager.ViewCard(meta.sprite);
+            }
+        }
     }
 
     int entered = 0;
@@ -84,13 +98,13 @@ public class Card : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if(state == CardState.Slot && !FindObjectOfType<GameManager>().inProgress)
+        if(state == CardState.Slot && !manager.inProgress && !manager.isViewingCard)
         {
             if (entered > 0) slot.mouseDown--;
             state = CardState.Using;
             slotPos = Vector3.zero;
-            FindObjectOfType<CardSlot>().RemoveCard(this);
-            FindObjectOfType<GameManager>().UseCard(this);
+            slot.RemoveCard(this);
+            manager.UseCard(this);
             state = CardState.Decay;
         }
     }
