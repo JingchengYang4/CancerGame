@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
 
     private SignalR signalR;
 
-    public Text roomsStat;
+    public TMP_Text roomsStat;
     public TMP_InputField roomInput;
     public GameObject joinRoomPage;
     public bool isConnected = false;
@@ -83,6 +83,8 @@ public class GameManager : MonoBehaviour
     public bool isViewingCard;
     public GameObject viewCardPanel;
     public Image cardImage;
+
+    public GameObject rules;
 
     public void RefreshStat(GameStat gstat)
     {
@@ -490,6 +492,18 @@ public class GameManager : MonoBehaviour
     {
         isViewingCard = false;
         viewCardPanel.SetActive(false);
+    }
+
+    public void ViewRules()
+    {
+        rules.SetActive(true);
+        isViewingCard = true;
+    }
+
+    public void CloseRules()
+    {
+        rules.SetActive(false);
+        isViewingCard = false;
     }
 
     public string translateDefault(string text)
